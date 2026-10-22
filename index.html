@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07100f">
+  <title>PSYCHOSIS — Horror 2D</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="container-fluid d-flex align-items-center justify-content-between gap-3">
+      <a class="brand" href="#" aria-label="PSYCHOSIS inicio"><img src="assets/favicon.svg" alt=""
+          class="brand-icon"><span>PSYCHOSIS</span></a>
+      <div class="header-status"><span class="pulse"></span> SISTEMA DE CONTENCIÓN <span class="d-none d-sm-inline">/
+          SECTOR 09</span></div>
+      <button id="soundToggle" class="btn btn-outline-light btn-sm sound-btn" aria-label="Activar o desactivar sonido">♫
+        <span>SONIDO</span></button>
+    </div>
+  </header>
+
+  <div id="vignette" class="global-vignette" aria-hidden="true"></div>
+  <div id="sanityWarning" class="sanity-warning hidden" aria-live="assertive"><span>⚠ CORRUPCIÓN DETECTADA</span></div>
+
+  <main>
+    <section id="loadingScreen" class="screen loading-screen">
+      <div class="loading-content">
+        <div class="eyebrow">ARCHIVO CLÍNICO // EXPEDIENTE 009</div>
+        <h1 class="glitch" data-text="PSYCHOSIS">PSYCHOSIS</h1>
+        <p class="loading-copy">INICIALIZANDO PROTOCOLO DE SUPERVIVENCIA</p>
+        <div class="progress loading-track" role="progressbar" aria-label="Carga del juego" aria-valuemin="0"
+          aria-valuemax="100">
+          <div id="loadBar" class="progress-bar"></div>
+        </div>
+        <div class="d-flex justify-content-between loading-meta"><span id="loadStatus">CARGANDO
+            RECURSOS...</span><strong id="loadPercent">0%</strong></div>
+        <p class="loading-tip" id="loadingTip">…</p>
+      </div>
+      <div class="scanlines"></div>
+    </section>
+
+    <section id="menuScreen" class="screen menu-screen hidden">
+      <div class="menu-panel">
+        <div class="eyebrow">NO ESTÁS SOLO EN LA OSCURIDAD</div>
+        <h1 class="glitch" data-text="PSYCHOSIS">PSYCHOSIS</h1>
+        <p class="subtitle">PROTOCOLO DE CONTENCIÓN <span>— 09</span></p>
+        <div class="menu-buttons">
+          <button class="menu-button primary" data-action="start"><span class="button-index">01</span> INICIAR PARTIDA
+            <span class="button-arrow">↗</span></button>
+          <button class="menu-button" data-action="instructions"><span class="button-index">02</span> INSTRUCCIONES
+            <span class="button-arrow">+</span></button>
+          <button class="menu-button" data-action="settings"><span class="button-index">03</span> CONFIGURACIÓN <span
+              class="button-arrow">⚙</span></button>
+          <button class="menu-button exit-button" data-action="exit"><span class="button-index">04</span> SALIR <span
+              class="button-arrow">×</span></button>
+        </div>
+        <div class="menu-foot"><span>BUILD 2.7.0 // 2D CANVAS</span><span>ADVERTENCIA: EXPOSICIÓN PSICOLÓGICA</span>
+        </div>
+        <div class="menu-whisper" id="menuWhisper"></div>
+      </div>
+      <div class="scanlines"></div>
+    </section>
+
+    <section id="gameScreen" class="screen game-screen hidden">
+      <div class="container-fluid game-wrap">
+        <div class="game-topline">
+          <div><span class="eyebrow">SECTOR 09 / CONTENCIÓN FALLIDA</span>
+            <h2>EL PASILLO <span class="accent">NOCTURNO</span></h2>
+          </div>
+          <div class="d-flex gap-2 align-items-center">
+            <div id="comboBadge" class="combo-badge hidden" aria-live="polite">x2</div>
+            <button id="pauseBtn" class="btn btn-outline-light btn-sm">Ⅱ PAUSAR</button>
+          </div>
+        </div>
+        <div class="hud row g-2 mb-3">
+          <div class="col-6 col-md-3">
+            <div class="hud-card"><small>ELIMINACIONES</small><strong id="score">00</strong></div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="hud-card"><small>TIEMPO RESTANTE</small><strong id="timer">60<span>s</span></strong></div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="hud-card"><small>RÉCORD PERSONAL</small><strong id="record">00</strong></div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="hud-card"><small>OBJETIVOS ACTIVOS</small><strong id="activeCount">25</strong></div>
+          </div>
+        </div>
+        <div class="canvas-shell">
+          <canvas id="gameCanvas" width="1100" height="620"
+            aria-label="Zona de juego: haz clic en la cabeza de los zombis para eliminarlos"></canvas>
+          <div id="startHint" class="canvas-hint"><span class="hint-mark">!</span><span>ENCUENTRA SUS
+              CABEZAS</span><small>Haz clic para disparar · Mantén los 25 objetivos activos</small></div>
+          <div id="pauseOverlay" class="pause-overlay hidden">
+            <div><span class="eyebrow">SEÑAL INTERRUMPIDA</span>
+              <h3>JUEGO EN PAUSA</h3><button id="resumeBtn" class="btn btn-danger">REANUDAR</button>
+            </div>
+          </div>
+          <div id="flash" class="shot-flash"></div>
+          <div id="glitchLayer" class="glitch-layer" aria-hidden="true"></div>
+          <div id="floatScoreLayer" class="float-score-layer" aria-hidden="true"></div>
+        </div>
+        <div class="game-bottom d-flex flex-wrap align-items-center justify-content-between gap-2">
+          <p class="mb-0"><span class="live-dot"></span> OBJETIVOS EN MOVIMIENTO <span class="muted">·</span> PUNTERÍA:
+            <b>CABEZA</b> <span class="muted">·</span> COMBO: <b id="comboLabel">0</b></p>
+          <div class="d-flex gap-2">
+            <button id="focusBtn" class="btn btn-outline-light btn-sm" title="Modo enfoque: ralentiza el tiempo">◎
+              ENFOQUE</button>
+            <button id="restartBtn" class="btn btn-outline-light btn-sm">↻ REINICIAR</button>
+            <button id="menuBtn" class="btn btn-outline-light btn-sm">← MENÚ</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="instructionsModal" class="overlay-modal hidden" role="dialog" aria-modal="true"
+      aria-labelledby="instructionsTitle">
+      <div class="modal-panel"><button class="modal-close" data-close aria-label="Cerrar">×</button>
+        <div class="eyebrow">MANUAL DE SUPERVIVENCIA</div>
+        <h2 id="instructionsTitle">INSTRUCCIONES</h2>
+        <ul>
+          <li><b>Apunta a la cabeza:</b> haz clic en la cabeza de un zombi para sumar puntos.</li>
+          <li><b>25 entidades:</b> siempre habrá 25 objetivos; al acertar, el zombi reaparece en otra zona.</li>
+          <li><b>Movimiento:</b> las entidades suben, bajan, viajan en diagonal o describen órbitas. Rebotan al
+            colisionar.</li>
+          <li><b>Combo:</b> acierta sin fallar para multiplicar puntos (x2, x3…). Un fallo rompe la racha.</li>
+          <li><b>Modo enfoque (tecla E):</b> ralentiza el tiempo 3 segundos. Tiene recarga.</li>
+          <li><b>Tiempo:</b> tienes 60 segundos. Los últimos 10 se mostrarán en rojo.</li>
+          <li><b>Récord:</b> la mejor puntuación se guarda en este navegador.</li>
+        </ul>
+        <p class="modal-note">Consejo: observa los patrones de movimiento y dispara con precisión. Si la señal se
+          corrompe… no mires atrás.</p>
+        <button class="btn btn-danger w-100" data-close>ENTENDIDO</button>
+      </div>
+    </section>
+
+    <section id="settingsModal" class="overlay-modal hidden" role="dialog" aria-modal="true"
+      aria-labelledby="settingsTitle">
+      <div class="modal-panel"><button class="modal-close" data-close aria-label="Cerrar">×</button>
+        <div class="eyebrow">AJUSTES DEL SISTEMA</div>
+        <h2 id="settingsTitle">CONFIGURACIÓN</h2>
+        <label class="setting-row">Volumen de ambiente <input id="volumeSlider" type="range" min="0" max="100"
+            value="35"></label>
+        <label class="setting-row">Duración de partida <select id="durationSelect" class="form-select form-select-sm">
+            <option value="60">60 segundos</option>
+            <option value="90">90 segundos</option>
+            <option value="120">120 segundos</option>
+          </select></label>
+        <label class="setting-row">Efectos de corrupción <input id="glitchToggle" type="checkbox" checked></label>
+        <button class="btn btn-danger w-100 mt-3" data-close>GUARDAR Y VOLVER</button>
+      </div>
+    </section>
+
+    <section id="resultModal" class="overlay-modal hidden" role="dialog" aria-modal="true"
+      aria-labelledby="resultTitle">
+      <div class="modal-panel result-panel">
+        <div class="eyebrow">PROTOCOLO FINALIZADO</div>
+        <h2 id="resultTitle">SEÑAL PERDIDA</h2>
+        <p>Objetivos eliminados</p>
+        <strong id="finalScore" class="final-score">00</strong>
+        <p>Récord guardado: <b id="finalRecord">00</b></p>
+        <p id="resultRank" class="result-rank"></p>
+        <button id="playAgainBtn" class="btn btn-danger w-100">VOLVER A INTENTAR</button>
+        <button id="resultMenuBtn" class="btn btn-outline-light w-100 mt-2">VOLVER AL MENÚ</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container-fluid footer-grid">
+      <div>
+        <div class="footer-brand"><img src="assets/favicon.svg" alt=""> PSYCHOSIS <span>© <span id="year"></span></span>
+        </div>
+        <p>Una experiencia de horror psicológico en 2D.</p>
+      </div>
+      <div class="credits"><span>CREADORA</span><b>Itzel Mendoza Sánchez</b><span>NO. DE CONTROL</span><b>26201715</b>
+      </div>
+      <div class="credits"><span>INSTITUCIÓN</span><b>Tecnológico Nacional de México</b><b>Campus: Instituto Tecnológico
+          de Pachuca</b><span>MATERIA</span><b>Graficación</b></div>
+      <div class="credits"><span>FECHA DE ACCESO</span><b id="currentDate">—</b><span>PROYECTO
+          ACADÉMICO</span><b>Unidades III y IV</b></div>
+    </div>
+  </footer>
+
+  <audio id="ambience" src="assets/ambience.wav" loop preload="auto"></audio>
+  <audio id="shotSound" src="assets/shot.wav" preload="auto"></audio>
+  <audio id="hitSound" src="assets/hit.wav" preload="auto"></audio>
+  <audio id="comboSound" src="assets/combo.wav" preload="auto"></audio>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="game.js"></script>
+</body>
+
+</html>
